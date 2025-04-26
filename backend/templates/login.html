@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - Face Recognition Dashboard</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    body {
+      position: relative;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(-45deg, #667eea, #764ba2, #ff5e57, #ff3b30);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    /* Animated Shapes */
+    .shape {
+      position: absolute;
+      opacity: 0.4;
+      z-index: 1;
+      border-radius: 50%;
+    }
+    /* Large circle */
+    .shape.circle {
+      background: #ff5e57;
+      width: 250px;
+      height: 250px;
+      top: -80px;
+      left: -80px;
+      animation: float 8s ease-in-out infinite;
+    }
+    /* Large square */
+    .shape.square {
+      background: #ff3b30;
+      width: 200px;
+      height: 200px;
+      bottom: -60px;
+      right: -60px;
+      border-radius: 20px;
+      animation: rotate 10s linear infinite;
+    }
+    /* Triangle */
+    .shape.triangle {
+      width: 0;
+      height: 0;
+      border-left: 70px solid transparent;
+      border-right: 70px solid transparent;
+      border-bottom: 140px solid #764ba2;
+      top: 15%;
+      right: -60px;
+      animation: float 7s ease-in-out infinite;
+    }
+    /* Extra circle */
+    .shape.circle2 {
+      background: #667eea;
+      width: 150px;
+      height: 150px;
+      bottom: 10%;
+      left: -70px;
+      animation: float 6s ease-in-out infinite;
+    }
+    /* Extra square */
+    .shape.square2 {
+      background: #ff5e57;
+      width: 120px;
+      height: 120px;
+      top: 70%;
+      left: 10%;
+      border-radius: 15px;
+      animation: rotate 8s linear infinite;
+    }
+    @keyframes float {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(25px); }
+      100% { transform: translateY(0); }
+    }
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    /* Login container (glassmorphism effect) */
+    .login-container {
+      position: relative;
+      z-index: 2;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      padding: 40px 30px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+      width: 350px;
+      animation: fadeInUp 1s ease;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .login-container h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #fff;
+      font-size: 1.8em;
+      font-weight: 500;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .login-container form {
+      display: flex;
+      flex-direction: column;
+    }
+    .login-container input {
+      padding: 12px 15px;
+      margin-bottom: 20px;
+      border: none;
+      border-radius: 30px;
+      outline: none;
+      font-size: 1em;
+      transition: background 0.3s;
+      background: rgba(255, 255, 255, 0.25);
+      color: #fff;
+    }
+    .login-container input::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+    }
+    .login-container input:focus {
+      background: rgba(255, 255, 255, 0.35);
+    }
+    .login-container button {
+      padding: 12px;
+      border: none;
+      border-radius: 30px;
+      background: #ff5e57;
+      color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .login-container button:hover {
+      background: #ff3b30;
+      transform: scale(1.03);
+    }
+    .error-message {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #ffb3b3;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Shapes -->
+  <div class="shape circle"></div>
+  <div class="shape square"></div>
+  <div class="shape triangle"></div>
+  <div class="shape circle2"></div>
+  <div class="shape square2"></div>
+  
+  <div class="login-container">
+    <h2>Welcome Back</h2>
+    {% if error %}
+      <div class="error-message">{{ error }}</div>
+    {% endif %}
+    <form method="POST">
+      <input type="text" name="username" placeholder="Username" required />
+      <input type="password" name="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
+  </div>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Face Recognition Dashboard</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600&display=swap" rel="stylesheet" />
+  <style>
+    /* Global Styles */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body {
+      position: relative;
+      overflow: hidden;
+      min-height: 100vh;
+      background: linear-gradient(-45deg, #667eea, #764ba2, #ff5e57, #ff3b30);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    /* Animated Shapes */
+    .shape {
+      position: absolute;
+      opacity: 0.4;
+      z-index: 1;
+      border-radius: 50%;
+    }
+    .shape.circle { background: #ff5e57; width: 250px; height: 250px; top: -80px; left: -80px; animation: float 8s ease-in-out infinite; }
+    .shape.square { background: #ff3b30; width: 200px; height: 200px; bottom: -60px; right: -60px; border-radius: 20px; animation: rotate 10s linear infinite; }
+    .shape.triangle {
+      width: 0; height: 0;
+      border-left: 70px solid transparent; border-right: 70px solid transparent;
+      border-bottom: 140px solid #764ba2;
+      top: 15%; right: -80px; animation: float 7s ease-in-out infinite;
+    }
+    .shape.circle2 { background: #667eea; width: 150px; height: 150px; bottom: 10%; left: -70px; animation: float 6s ease-in-out infinite; }
+    .shape.square2 { background: #ff5e57; width: 120px; height: 120px; top: 70%; left: 5%; border-radius: 15px; animation: rotate 8s linear infinite; }
+    @keyframes float { 0% { transform: translateY(0); } 50% { transform: translateY(25px); } 100% { transform: translateY(0); } }
+    @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    /* Header */
+    header {
+      position: relative; z-index: 3;
+      background: rgba(0, 0, 0, 0.3); padding: 15px 30px;
+      display: flex; justify-content: space-between; align-items: center;
+      color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    header h1 { font-size: 1.8em; }
+    header button {
+      background: #ff5e57; border: none; padding: 10px 20px; border-radius: 25px;
+      color: #fff; font-size: 1em; cursor: pointer; transition: background 0.3s;
+    }
+    header button:hover { background: #ff3b30; }
+    /* Main Container */
+    .container {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 20px 30px; gap: 20px; margin-top: 80px;
+    }
+    /* Video Section */
+    .video-section { width: 640px; max-width: 100%; }
+    .video-container {
+      position: relative; width: 100%; height: 480px; background: #000;
+      border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    video { width: 100%; height: 100%; object-fit: cover; }
+    #status { text-align: center; margin-top: 15px; font-size: 1.2em; color: #fff; }
+    /* Manual Classification Buttons */
+    .manual-buttons {
+      display: none; margin-top: 10px; gap: 10px;
+    }
+    .manual-buttons button {
+      padding: 10px 15px; border: none; border-radius: 5px;
+      font-size: 1em; cursor: pointer; transition: background 0.3s;
+    }
+    .manual-buttons button.intruder { background: #ff4d4d; color: #fff; }
+    .manual-buttons button.manual-known { background: #4caf50; color: #fff; }
+    .manual-buttons button.manual-safe { background: #007bff; color: #fff; }
+    .manual-buttons button:hover { opacity: 0.9; }
+    @media (max-width: 768px) {
+      .video-container { height: 360px; }
+      #status { font-size: 1em; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Shapes -->
+  <div class="shape circle"></div>
+  <div class="shape square"></div>
+  <div class="shape triangle"></div>
+  <div class="shape circle2"></div>
+  <div class="shape square2"></div>
+  
+  <!-- Header -->
+  <header>
+    <h1>Face Recognition Dashboard</h1>
+    <button onclick="window.location.href='/logout'">Logout</button>
+  </header>
+  
+  <!-- Main Container -->
+  <div class="container">
+    <!-- Live Video Feed Section -->
+    <div class="video-section">
+      <div class="video-container">
+        <video id="video" autoplay></video>
+      </div>
+      <div id="status">Initializing camera...</div>
+      <!-- Manual Classification Buttons for unknown individuals -->
+      <div id="manualOptions" class="manual-buttons">
+        <button class="intruder" onclick="manualClassify('intruder')">Mark as Intruder</button>
+        <button class="manual-known" onclick="manualClassify('manual_known')">Mark as Known Person</button>
+        <button class="manual-safe" onclick="manualClassify('safe')">Accept AI Recognition</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Hidden Canvas for Capturing Snapshots -->
+  <canvas id="snapshot" width="640" height="480" style="display: none;"></canvas>
+  
+  <script>
+    // JavaScript for live video capture, backend communication, and manual classification
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('snapshot');
+    const statusDiv = document.getElementById('status');
+    const manualOptions = document.getElementById('manualOptions');
+
+    // Request camera access with a desired resolution (optional)
+    navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } } })
+      .then(stream => {
+        video.srcObject = stream;
+        statusDiv.innerText = "Camera access granted. Live feed is active.";
+      })
+      .catch(err => {
+        statusDiv.innerText = "Error accessing camera: " + err;
+      });
+
+    // Function to capture a frame and send it to the /check-intruder endpoint every 3 seconds
+    function captureAndSend() {
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => {
+        // Check if blob is valid (size threshold, e.g., > 1000 bytes)
+        if (!blob || blob.size < 1000) {
+          console.error("Captured image is too small or incomplete. Skipping this frame.");
+          return;
+        }
+        const formData = new FormData();
+        formData.append('image', blob, 'live.jpg');
+        fetch('/check-intruder', { method: 'POST', body: formData })
+          .then(response => response.json())
+          .then(data => {
+            if (data.result === "SAFE") {
+              let displayName = data.identity ? data.identity : data.message;
+              statusDiv.innerHTML = `<span style="color:green;">✅ Authorized: ${displayName}</span>`;
+              manualOptions.style.display = "none";
+            } else if (data.result === "INTRUDER_DETECTED" || data.result === "NO_FACE_DETECTED") {
+              statusDiv.innerHTML = `<span style="color:orange;">⚠️ ${data.message}</span>`;
+              // Show manual classification buttons when face is not recognized
+              manualOptions.style.display = "flex";
+            } else {
+              statusDiv.innerHTML = `<span style="color:red;">❌ Error: ${data.message}</span>`;
+              manualOptions.style.display = "none";
+            }
+          })
+          .catch(error => {
+            statusDiv.innerHTML = `<span style="color:red;">Network Error: ${error.message}</span>`;
+            manualOptions.style.display = "none";
+          });
+      }, 'image/jpeg');
+    }
+
+    // Function to manually classify the current image
+    function manualClassify(choice) {
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => {
+        // Check blob size as before
+        if (!blob || blob.size < 1000) {
+          console.error("Captured image is too small for manual classification.");
+          return;
+        }
+        const formData = new FormData();
+        formData.append('image', blob, 'manual.jpg');
+        formData.append('classification', choice);
+        fetch('/manual-classification', { method: 'POST', body: formData })
+          .then(response => response.text())
+          .then(text => {
+            try {
+              const data = JSON.parse(text);
+              statusDiv.innerHTML = `<span style="color:blue;">${data.message}</span>`;
+            } catch (err) {
+              console.error("Failed to parse JSON. Raw response:", text);
+              statusDiv.innerHTML = `<span style="color:red;">Unexpected response format</span>`;
+            }
+            manualOptions.style.display = "none";
+          })
+          .catch(error => {
+            statusDiv.innerHTML = `<span style="color:red;">Network Error: ${error.message}</span>`;
+            manualOptions.style.display = "none";
+          });
+      }, 'image/jpeg');
+    }
+
+    // Capture and send a frame every 3000 milliseconds (3 seconds)
+    setInterval(captureAndSend, 3000);
+  </script>
+</body>
+</html>
